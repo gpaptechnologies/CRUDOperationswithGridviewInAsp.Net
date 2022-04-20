@@ -1,0 +1,96 @@
+CREATE TABLE [dbo].[EmployeeMaster](
+	[EmployeeMasterID] [int] IDENTITY(1,1) NOT NULL,
+	[EmployeeCode] [int] NOT NULL,
+	[EmployeeName] [nvarchar](50) NOT NULL,
+	[Designation] [nvarchar](50) NOT NULL,
+	[Salary] [int] NOT NULL,
+	[IsDeleted] [bit] NOT NULL,
+ CONSTRAINT [PK_EmployeeMaster] PRIMARY KEY CLUSTERED 
+(
+	[EmployeeMasterID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+
+ALTER TABLE [dbo].[EmployeeMaster] ADD  CONSTRAINT [DF_EmployeeMaster_IsDeleted]  DEFAULT ((0)) FOR [IsDeleted]
+GO
+
+
+create proc [dbo].[USP_GetEmployeeDetails]
+(
+@EmployeeMasterID int
+)
+as
+begin
+
+if(@EmployeeMasterID > 0)
+	begin
+		select * from DBO.EmployeeMaster WHERE EmployeeMasterID = @EmployeeMasterID
+	end
+else
+	begin
+		SELECT * FROM DBO.EmployeeMaster WHERE IsDeleted = 0
+	end
+end
+GO
+
+
+
+
+CREATE PROC [dbo].[USP_INSERT_UPDATE_EMPLOYEEDETAILS]
+(
+@EmployeeMasterID INT,
+@EmployeeCode INT,
+@EmployeeName NVARCHAR(50),
+@Designation NVARCHAR(50),
+@Salary INT,
+@message nvarchar(100) output
+)
+as
+begin
+begin try
+
+/* Update */
+if(@EmployeeMasterID > 0)
+	begin
+		UPDATE DBO.EmployeeMaster SET EmployeeCode = @EmployeeCode,
+		EmployeeName = @EmployeeName, Designation = @Designation,
+		Salary = @Salary
+		WHERE EmployeeMasterID = @EmployeeMasterID
+
+		set @message = 'Employee details updated successfully.'
+	end
+else
+	/* Insert */
+	begin
+		INSERT DBO.EmployeeMaster(EmployeeCode,EmployeeName,Designation,Salary)
+		VALUES(@EmployeeCode,@EmployeeName,@Designation,@Salary)
+
+		set @message = 'Employee details saved successfully.'
+	end
+end try
+begin catch
+	set @message = ERROR_MESSAGE()
+end catch
+end
+
+GO
+
+
+
+CREATE PROC [dbo].[USP_DELETE_EMPLOYEEDETAILS]
+(
+@EmployeeMasterID int,
+@message nvarchar(100) output
+)
+as
+begin
+
+/* Delete */
+update dbo.EmployeeMaster set IsDeleted = 1
+	where EmployeeMasterID = @EmployeeMasterID
+
+set @message = 'Employee details deleted successfully.'
+end
+GO
